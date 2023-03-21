@@ -1,5 +1,6 @@
 <?php
 include_once 'Functions.php';
+//include_once 'BloomFilter.php';
 
 function testFunc()
 {
@@ -12,4 +13,22 @@ function testFunc()
 
 
 }
-testFunc();
+//testFunc();
+
+function testRadix()
+{
+    $from = 'RYgs';
+    dd(sixtytwodec($from));
+
+    $from = '49784984668';
+    dd(sixtytwodec($from));
+}
+//testRadix();
+
+function testBloomFilter()
+{
+    $a = '4984165165';
+    $bf = new BloomFilter();
+    dd($bf->contains($a));
+}
+testBloomFilter();
