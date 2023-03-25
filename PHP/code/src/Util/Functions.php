@@ -1,32 +1,26 @@
 <?php
 
-function autoload($className)
-{
-    // 定义类文件目录
-    $classDirs = [__DIR__ . '/classes/', __DIR__ . '/'];
-
-    // 将命名空间转换为路径格式
-    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
-
-    foreach ($classDirs as $classDir) {
-        // 拼接完整的文件路径
-        $classFile = $classDir . $classPath;
-
-        // 如果文件存在，则加载
-        if (file_exists($classFile)) {
-            require_once $classFile;
-        }
-    }
-}
-
-// 注册自动加载函数
-spl_autoload_register('autoload');
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 // 通用打印参数并退出，用于断点调试
 if (!function_exists('dd')) {
     function dd() {
         var_dump(...func_get_args());
         die();
+    }
+}
+
+/**
+ * 文件日志
+ */
+if (!function_exists('logger')) {
+    function logger($name = 'default', $group = 'default')
+    {
+        $log = new Logger($name);
+        $log->pushHandler(new StreamHandler(sprintf(__DIR__ . './../../logs/%s.log', $group), Logger::DEBUG));
+
+        return $log;
     }
 }
 

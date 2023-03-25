@@ -1,4 +1,5 @@
 <?php
+namespace Lpp\BloomFilter;
 
 class BloomFilter
 {

@@ -1,4 +1,5 @@
 <?php
+namespace Lpp\BloomFilter;
 
 class BloomFilterArray
 {
@@ -40,36 +41,4 @@ class BloomFilterArray
         }
         return true;
     }
-}
-
-// 哈希函数类
-class HashFunc
-{
-    private $seed;
-
-    public function __construct($seed)
-    {
-        $this->seed = $seed;
-    }
-
-    // 计算哈希值
-    public function hash($value)
-    {
-        return crc32($value . $this->seed);
-    }
-}
-
-// 使用示例
-$bf = new BloomFilterArray();
-$bf->add('foo');
-$bf->add('bar');
-
-if ($bf->exists('foo')) {
-    echo "foo exists\n";
-}
-
-if ($bf->exists('baz')) {
-    echo "baz exists\n";
-} else {
-    echo "baz not exists\n";
 }

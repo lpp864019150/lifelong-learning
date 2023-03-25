@@ -1,5 +1,10 @@
 <?php
-include_once 'Functions.php';
+
+use Lpp\BloomFilter\BloomFilterArray;
+
+include_once 'vendor/autoload.php';
+
+//include_once 'Functions.php';
 //include_once 'BloomFilter.php';
 
 function testFunc()
@@ -31,4 +36,42 @@ function testBloomFilter()
     $bf = new BloomFilter();
     dd($bf->contains($a));
 }
-testBloomFilter();
+//testBloomFilter();
+
+function testBloomFilterArray()
+{
+    // 使用示例
+    $bf = new BloomFilterArray();
+    $bf->add('foo');
+    $bf->add('bar');
+
+    if ($bf->exists('foo')) {
+        echo "foo exists\n";
+    }
+
+    if ($bf->exists('baz')) {
+        echo "baz exists\n";
+    } else {
+        echo "baz not exists\n";
+    }
+}
+//testBloomFilterArray();
+
+function testRedisSet()
+{
+    // 连接Redis服务器
+    $redis = new Redis();
+    $redis->connect('127.0.0.1', 6379);
+
+    // 开始管道事务
+    $redis->multi(Redis::PIPELINE);
+
+    // 向Redis插入1到1000000的值
+    for ($i = 1; $i <= 10000; $i++) {
+        $redis->sAdd('myset:10000', $i);
+    }
+
+    // 提交管道事务
+    $redis->exec();
+}
+testRedisSet();
