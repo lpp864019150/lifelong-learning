@@ -178,5 +178,11 @@ if (! function_exists('radix')) {
         return $number;
     }
 }
+function getAllImage(string $html)
+{
+    $pattern = '/<img.+?src=[\'"](?P<src>.+?)[\'"].*?>/i';
+    preg_match_all($pattern, $html, $matches);
+    dd($matches);
+}
 
 

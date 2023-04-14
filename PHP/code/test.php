@@ -74,4 +74,9 @@ function testRedisSet()
     // 提交管道事务
     $redis->exec();
 }
-testRedisSet();
+//testRedisSet();
+function testImg()
+{
+    getAllImage('<html><img src="aaa">');
+}
+testImg();
