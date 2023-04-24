@@ -77,6 +77,12 @@ function testRedisSet()
 //testRedisSet();
 function testImg()
 {
-    getAllImage('<html><img src="aaa">');
+    getImgFromHtml('<html><img src="aaa">');
 }
-testImg();
+//testImg();
+function testVideo()
+{
+    $html = '<html><video   ss bb src=video.mp4></video><video src="video2.mp4"></video>';
+    dd(getVideoFromHtml($html));
+}
+testVideo();

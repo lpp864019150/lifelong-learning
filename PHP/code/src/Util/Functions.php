@@ -1,7 +1,8 @@
 <?php
 
 use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Formatter\LineFormatter;
 
 // 通用打印参数并退出，用于断点调试
 if (!function_exists('dd')) {
@@ -18,7 +19,9 @@ if (!function_exists('logger')) {
     function logger($name = 'default', $group = 'default')
     {
         $log = new Logger($name);
-        $log->pushHandler(new StreamHandler(sprintf(__DIR__ . './../../logs/%s.log', $group), Logger::DEBUG));
+        $handler = new RotatingFileHandler(sprintf(__DIR__ . './../../runtime/logs/%s.log', $group), 0, Logger::DEBUG);
+        $handler->setFormatter(new LineFormatter(null, 'Y-m-d H:i:s'));
+        $log->pushHandler($handler);
 
         return $log;
     }
@@ -140,7 +143,7 @@ if (! function_exists('xdec')) {
      *
      * @param string $num
      * @param integer $from
-     * @return number
+     * @return integer|string
      */
     function xdec($num, $from = 62)
     {
@@ -178,11 +181,55 @@ if (! function_exists('radix')) {
         return $number;
     }
 }
-function getAllImage(string $html)
-{
-    $pattern = '/<img.+?src=[\'"](?P<src>.+?)[\'"].*?>/i';
-    preg_match_all($pattern, $html, $matches);
-    dd($matches);
+if (! function_exists('getImgFromHtml')) {
+    /**
+     * 从html获取所有图片
+     *
+     * @link https://juejin.cn/post/7107036013582614536
+     *
+     * @param string $html
+     * @return array
+     */
+    function getImgFromHtml(string $html) : array
+    {
+        $pattern = '/<img\s[^<>]*src=[\'"]?(?P<src>[^\'" >]+)[\'"]?[^>]*>/i';
+        preg_match_all($pattern, $html, $matches);
+        return $matches['src'] ?? [];
+    }
 }
+if (! function_exists('getVideoFromHtml')) {
+    /**
+     * 从html获取所有视频
+     *
+     * @link https://juejin.cn/post/7107036013582614536
+     *
+     * @param string $html
+     * @return array
+     */
+    function getVideoFromHtml(string $html) : array
+    {
+        $pattern = '/<video\s.*?src=[\'"]?(?P<src>[^\'" >]+)[\'"]?[^>]*>/i';
+        preg_match_all($pattern, $html, $matches);
+        return $matches['src'] ?? [];
+    }
+}
+if (! function_exists('getImgFromMarkdown')) {
+    /**
+     * 从markdown获取所有图片
+     *
+     * @link https://juejin.cn/post/7107036013582614536
+     *
+     * @param string $markdown
+     * @return array
+     */
+    function getImgFromMarkdown(string $markdown) : array
+    {
+        $pattern = '/!\[.*?\]\((?P<src>.*?)\)/i';
+        preg_match_all($pattern, $markdown, $matches);
+        return $matches['src'] ?? [];
+    }
+}
+
+
 
 

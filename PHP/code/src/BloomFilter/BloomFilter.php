@@ -10,7 +10,7 @@ class BloomFilter
 
     public function __construct(int $size = 1000, int $hashIterations = 3)
     {
-        $this->redis = new Redis();
+        $this->redis = new \Redis();
         $this->redis->connect('127.0.0.1');
         $this->size = $size;
         $this->hashIterations = $hashIterations;
