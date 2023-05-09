@@ -15,3 +15,4 @@ vendor/
 composer
 test.http
 test.php
+/Js/data/
