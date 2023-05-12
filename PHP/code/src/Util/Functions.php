@@ -229,6 +229,39 @@ if (! function_exists('getImgFromMarkdown')) {
         return $matches['src'] ?? [];
     }
 }
+// Redis先判断是否存在，然后删除，使用lua脚本保证原子性
+if (! function_exists('redisDelByLua')) {
+    /**
+     * Redis先判断是否存在，然后删除，使用lua脚本保证原子性
+     *
+     * @param string $key
+     * @return bool
+     */
+    function redisDelByLua(string $key) : bool
+    {
+        $redis = new Redis();
+        $lua = <<<LUA
+if redis.call('exists', KEYS[1]) == 1 then
+    return redis.call('del', KEYS[1])
+end
+LUA;
+        return $redis->eval($lua, [$key], 1);
+    }
+}
+if (! function_exists('redisExistsAndDel')) {
+    /**
+     * Redis先判断是否存在，然后删除，利用del的返回值是否大于0来判断是否存在，保证原子性
+     *
+     * @param string $key
+     * @return bool
+     */
+    function redisExistsAndDel(string $key) : bool
+    {
+        $redis = new Redis();
+        return $redis->del($key) > 0;
+    }
+}
+
 
 
 
