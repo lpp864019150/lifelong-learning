@@ -73,7 +73,7 @@ if (! function_exists('datetime')) {
 }
 
 // 进制转换
-// PHP原生支持的转换函数：二进制：bindec/decbin/bin2hex/hex2bin、十六进制：hexdec/dexhex、八进制：octdec/decoct
+// PHP原生支持的转换函数：二进制：bindec/decbin/bin2hex/hex2bin、十六进制：hexdec/dexhex、八进制：octdec/decoct、2-36进制：base_convert
 const DICT = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 if (! function_exists('sixtytwodec')) {
     /**
