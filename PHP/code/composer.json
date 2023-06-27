@@ -17,7 +17,9 @@
     "ext-bcmath": "*",
     "ext-json": "*",
     "ext-redis": "^5.3",
-    "ext-igbinary": "*"
+    "ext-igbinary": "*",
+    "ext-zip": "*",
+    "ext-zlib": "*"
   },
   "autoload": {
     "psr-4": {
