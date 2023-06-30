@@ -23,4 +23,18 @@ class FunctionsTest extends TestCase
         logger('FunctionsTest', 'test')->info(PHP_EOL . __METHOD__ . " result: " . json_encode($result) . PHP_EOL);
         $this->assertEquals(2, count($result));
     }
+
+    public function testCountChinese()
+    {
+        $str = '这里面有两种主流升级方式：依据最新版本升级方式引导升级，依据用户当前所用版本升级方式引导用户升级。依据最新版本升级方式引导用户升级：不管用户当前所用版本，所有版本都是依据最新版的升级方式来升级的。';
+        $this->assertEquals(92, countChinese($str));
+        //$this->assertEquals(50, countChinese($str, 50));
+    }
+
+    public function testHasChinese()
+    {
+        $str = '这里面有两种主流升级方式：依据最新版本升级方式引导升级，依据用户当前所用版本升级方式引导用户升级。依据最新版本升级方式引导用户升级：不管用户当前所用版本，所有版本都是依据最新版的升级方式来升级的。';
+        $this->assertEquals(1, countChinese($str, 1));
+        $this->assertEquals(true, hasChinese($str));
+    }
 }

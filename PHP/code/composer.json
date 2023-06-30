@@ -19,7 +19,8 @@
     "ext-redis": "^5.3",
     "ext-igbinary": "*",
     "ext-zip": "*",
-    "ext-zlib": "*"
+    "ext-zlib": "*",
+    "ext-mbstring": "*"
   },
   "autoload": {
     "psr-4": {

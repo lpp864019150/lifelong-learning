@@ -261,7 +261,42 @@ if (! function_exists('redisExistsAndDel')) {
         return $redis->del($key) > 0;
     }
 }
-
+// 统计有多少个汉字
+if (! function_exists('countChinese')) {
+    /**
+     * 统计有多少个汉字
+     *
+     * @param string $str
+     * @param int $max 最大统计个数，0表示不限制
+     * @return int
+     */
+    function countChinese(string $str, int $max = 0) : int
+    {
+        $count = 0;
+        $len = mb_strlen($str);
+        for ($i = 0; $i < $len; $i++) {
+            $char = mb_substr($str, $i, 1);
+            if (mb_ord($char) >= 0x4E00 && mb_ord($char) <= 0x9FA5) {
+                $count++;
+                if ($max && $count >= $max) return $max;
+            }
+        }
+        return $count;
+    }
+}
+// 判断是否有中文字符
+if (! function_exists('hasChinese')) {
+    /**
+     * 判断是否有中文字符
+     *
+     * @param string $str
+     * @return bool
+     */
+    function hasChinese(string $str) : bool
+    {
+        return preg_match('/[\x{4e00}-\x{9fa5}]/u', $str) > 0;
+    }
+}
 
 
 

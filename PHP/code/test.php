@@ -85,4 +85,12 @@ function testVideo()
     $html = '<html><video   ss bb src=video.mp4></video><video src="video2.mp4"></video>';
     dd(getVideoFromHtml($html));
 }
-testVideo();
+//testVideo();
+function testCountChinese()
+{
+    $str = '这里面有两种主流升级方式：依据最新版本升级方式引导升级，依据用户当前所用版本升级方式引导用户升级。依据最新版本升级方式引导用户升级：不管用户当前所用版本，所有版本都是依据最新版的升级方式来升级的。';
+    $s = microtime(true);
+    $c = countChinese($str, 50);
+    dd($c, time_used($s));
+}
+testCountChinese();
