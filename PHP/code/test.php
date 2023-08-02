@@ -93,4 +93,13 @@ function testCountChinese()
     $c = countChinese($str, 50);
     dd($c, time_used($s));
 }
-testCountChinese();
+//testCountChinese();
+function testException()
+{
+    try {
+        throw new Exception('test');
+    } finally {
+        echo 'finally' . PHP_EOL;
+    }
+}
+testException();

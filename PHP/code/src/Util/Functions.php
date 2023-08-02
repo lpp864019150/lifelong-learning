@@ -27,6 +27,26 @@ if (!function_exists('logger')) {
     }
 }
 
+static $_instance = [];
+// 获取redis实列
+if (!function_exists('redis')) {
+    function redis($db = 0)
+    {
+        try{
+            if (isset($_instance[$db]) && $_instance[$db]->ping()) {
+                return $_instance[$db];
+            }
+        } catch (Exception $e) {
+
+        }
+
+        $_instance[$db] = new \Redis();
+        $_instance[$db]->pconnect('127.0.0.1', 6379);
+        $_instance[$db]->select($db);
+        return $_instance[$db];
+    }
+}
+
 // 消耗时间
 if (!function_exists('time_used')) {
     function time_used($start) {
@@ -229,6 +249,31 @@ if (! function_exists('getImgFromMarkdown')) {
         return $matches['src'] ?? [];
     }
 }
+// Redis分布式锁
+if (! function_exists('redisLock')) {
+    /**
+     * Redis分布式锁
+     *
+     * @param string $key
+     * @param integer $expire
+     * @return bool
+     */
+    function redisLock(string $key, int $expire = 5) : bool
+    {
+        $redis = redis();
+        $token = uniqid();
+        $result = $redis->set($key, $token, ['nx', 'ex' => $expire]);
+        if ($result) {
+            return true;
+        }
+        // 防止死锁
+        $val = $redis->get($key);
+        if ($val && $val == $token) {
+            $redis->del($key);
+        }
+        return false;
+    }
+}
 // Redis先判断是否存在，然后删除，使用lua脚本保证原子性
 if (! function_exists('redisDelByLua')) {
     /**
@@ -237,15 +282,15 @@ if (! function_exists('redisDelByLua')) {
      * @param string $key
      * @return bool
      */
-    function redisDelByLua(string $key) : bool
+    function redisDelByLua(string $key, $val) : bool
     {
-        $redis = new Redis();
+        $redis = redis();
         $lua = <<<LUA
-if redis.call('exists', KEYS[1]) == 1 then
+if redis.call('get', KEYS[1]) == ARGV[1] then
     return redis.call('del', KEYS[1])
 end
 LUA;
-        return $redis->eval($lua, [$key], 1);
+        return $redis->eval($lua, [$key, $val], 1);
     }
 }
 if (! function_exists('redisExistsAndDel')) {
@@ -257,8 +302,37 @@ if (! function_exists('redisExistsAndDel')) {
      */
     function redisExistsAndDel(string $key) : bool
     {
-        $redis = new Redis();
+        $redis = redis();
         return $redis->del($key) > 0;
+    }
+}
+if (! function_exists('lock')) {
+    /**
+     * 加锁操作，其中加锁使用set nx ex命令保证原子性，解锁使用lua脚本保证原子性
+     * @param callable $call 加锁后执行的逻辑
+     * @param string $key 锁的key
+     * @param int $ttl 锁的过期时间
+     * @return mixed
+     * @throws Exception
+     */
+    function lock(callable $call, string $key, int $ttl = 20)
+    {
+        $luaTpl = <<<LUA
+if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('del', KEYS[1])
+end
+LUA;
+        $redis = redis();
+        $random = uniqid();
+        if ($redis->set($key, $random, ['nx', 'ex' => $ttl])) {
+            try {
+                return call_user_func($call);
+            } finally { // 无论成功与否都要解锁
+                $redis->eval($luaTpl, [$key, $random], 1);
+            }
+        } else {
+            throw new \Exception('blocked by lock: ' . $key);
+        }
     }
 }
 // 统计有多少个汉字
@@ -297,6 +371,218 @@ if (! function_exists('hasChinese')) {
         return preg_match('/[\x{4e00}-\x{9fa5}]/u', $str) > 0;
     }
 }
+// 检测是否是苹果IP
+if (! function_exists('isAppleIp')) {
+    /**
+     * 检测是否是苹果IP
+     *
+     * @param string $ip
+     * @return bool
+     */
+    function isAppleIp(string $ip) : bool
+    {
+        $ip = gethostbyname($ip);
+        $pattern = '/^(17[0-9]|19[0-9]|25[0-9]|27[0-9]|30[0-9]|36[0-9]|42[0-9]|45[0-9]|50[0-9]|58[0-9]|60[0-9]|90[0-9]|100[0-9])\.(16[0-9]|24[0-9]|32[0-9]|40[0-9]|48[0-9]|56[0-9]|64[0-9]|72[0-9]|80[0-9]|88[0-9]|96[0-9]|104[0-9]|112[0-9]|120[0-9]|128[0-9]|136[0-9]|144[0-9]|152[0-9]|160[0-9]|168[0-9]|176[0-9]|184[0-9]|192[0-9]|200[0-9]|208[0-9]|216[0-9]|224[0-9]|232[0-9]|240[0-9]|248[0-9])\.(0|255)$/';
+        return preg_match($pattern, $ip) > 0;
+    }
+}
+// 检测是否是苹果IP
+if (! function_exists('isAppleIp2')) {
+    /**
+     * 检测是否是苹果IP
+     *
+     * @param string $ip
+     * @return bool
+     */
+    function isAppleIp2(string $ip) : bool
+    {
+        $ip = gethostbyname($ip);
+        $pattern = '/^(17[0-9]|19[0-9]|25[0-9]|27[0-9]|30[0-9]|36[0-9]|42[0-9]|45[0-9]|50[0-9]|58[0-9]|60[0-9]|90[0-9]|100[0-9])\.(16[0-9]|24[0-9]|32[0-9]|40[0-9]|48[0-9]|56[0-9]|64[0-9]|72[0-9]|80[0-9]|88[0-9]|96[0-9]|104[0-9]|112[0-9]|120[0-9]|128[0-9]|136[0-9]|144[0-9]|152[0-9]|160[0-9]|168[0-9]|176[0-9]|184[0-9]|192[0-9]|200[0-9]|208[0-9]|216[0-9]|224[0-9]|232[0-9]|240[0-9]|248[0-9])\.(0|255)$/';
+        return preg_match($pattern, $ip) > 0;
+    }
+}
+// 获取jsapi_ticket
+if (! function_exists('getJsapiTicket')) {
+    /**
+     * 获取jsapi_ticket
+     *
+     * @param string $appId
+     * @param string $appSecret
+     * @return string
+     */
+    function getJsapiTicket(string $appId, string $appSecret) : string
+    {
+        $cacheKey = 'wx_jsapi_ticket_' . $appId;
+        $redis = redis();
+        $ticket = $redis->get($cacheKey);
+        if (! $ticket) {
+            $url = 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=' . getAccessToken($appId, $appSecret) . '&type=jsapi';
+            $res = json_decode(file_get_contents($url), true);
+            if ($res['errcode'] == 0) {
+                $ticket = $res['ticket'];
+                $redis->set($cacheKey, $ticket, 7000);
+            } else {
+                throw new \Exception('获取jsapi_ticket失败：' . $res['errmsg']);
+            }
+        }
+        return $ticket;
+    }
+}
+// 获取access_token
+if (! function_exists('getAccessToken')) {
+    /**
+     * 获取access_token
+     *
+     * @param string $appId
+     * @param string $appSecret
+     * @return string
+     */
+    function getAccessToken(string $appId, string $appSecret) : string
+    {
+        $cacheKey = 'wx_access_token_' . $appId;
+        $redis = redis();
+        $token = $redis->get($cacheKey);
+        if (! $token) {
+            $url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=' . $appId . '&secret=' . $appSecret;
+            $res = json_decode(file_get_contents($url), true);
+            if ($res['access_token']) {
+                $token = $res['access_token'];
+                $redis->set($cacheKey, $token, 7000);
+            } else {
+                throw new \Exception('获取access_token失败：' . $res['errmsg']);
+            }
+        }
+        return $token;
+    }
+}
+// 获取微信用户信息
+if (! function_exists('getWxUserInfo')) {
+    /**
+     * 获取微信用户信息
+     *
+     * @param string $appId
+     * @param string $appSecret
+     * @param string $code
+     * @return array
+     */
+    function getWxUserInfo(string $appId, string $appSecret, string $code) : array
+    {
+        $url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' . $appId . '&secret=' . $appSecret . '&code=' . $code . '&grant_type=authorization_code';
+        $res = json_decode(file_get_contents($url), true);
+        if (isset($res['errcode'])) {
+            throw new \Exception('获取access_token失败：' . $res['errmsg']);
+        }
+        $url = 'https://api.weixin.qq.com/sns/userinfo?access_token=' . $res['access_token'] . '&openid=' . $res['openid'] . '&lang=zh_CN';
+        $res = json_decode(file_get_contents($url), true);
+        if (isset($res['errcode'])) {
+            throw new \Exception('获取用户信息失败：' . $res['errmsg']);
+        }
+        return $res;
+    }
+}
+// 计算签名，后端根据jsapi_ticket等信息将签名计算好并将signature、timestamp、nonceStr，返回给前端
+if (! function_exists('calcSignature')) {
+    /**
+     * 计算签名，后端根据jsapi_ticket等信息将签名计算好并将signature、timestamp、nonceStr，返回给前端
+     *
+     * @param string $ticket
+     * @param string $url
+     * @param int $timestamp
+     * @param string $nonceStr
+     * @return string
+     */
+    function calcSignature(string $ticket, string $url, int $timestamp, string $nonceStr) : string
+    {
+        $data = [
+            'jsapi_ticket' => $ticket,
+            'noncestr' => $nonceStr,
+            'timestamp' => $timestamp,
+            'url' => $url,
+        ];
+        ksort($data);
+        $str = '';
+        foreach ($data as $k => $v) {
+            $str .= $k . '=' . $v . '&';
+        }
+        $str = rtrim($str, '&');
+        return sha1($str);
+    }
+}
+// 判断是否是微信浏览器
+if (! function_exists('isWeixinBrowser')) {
+    /**
+     * 判断是否是微信浏览器
+     *
+     * @return bool
+     */
+    function isWeixinBrowser() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger') !== false;
+    }
+}
+// 判断是否是微信小程序
+if (! function_exists('isWeixinMiniProgram')) {
+    /**
+     * 判断是否是微信小程序
+     *
+     * @return bool
+     */
+    function isWeixinMiniProgram() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'miniProgram') !== false;
+    }
+}
+// 判断是否是支付宝小程序
+if (! function_exists('isAlipayMiniProgram')) {
+    /**
+     * 判断是否是支付宝小程序
+     *
+     * @return bool
+     */
+    function isAlipayMiniProgram() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'AlipayClient') !== false;
+    }
+}
+// 判断是否是QQ小程序
+if (! function_exists('isQqMiniProgram')) {
+    /**
+     * 判断是否是QQ小程序
+     *
+     * @return bool
+     */
+    function isQqMiniProgram() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'QQ') !== false;
+    }
+}
+// 判断是否是百度小程序
+if (! function_exists('isBaiduMiniProgram')) {
+    /**
+     * 判断是否是百度小程序
+     *
+     * @return bool
+     */
+    function isBaiduMiniProgram() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'swan-baiduboxapp') !== false;
+    }
+}
+// 判断是否是头条小程序
+if (! function_exists('isToutiaoMiniProgram')) {
+    /**
+     * 判断是否是头条小程序
+     *
+     * @return bool
+     */
+    function isToutiaoMiniProgram() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'toutiao') !== false;
+    }
+}
+
+
+
 
 
 

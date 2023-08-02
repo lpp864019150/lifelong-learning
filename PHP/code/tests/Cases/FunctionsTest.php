@@ -37,4 +37,78 @@ class FunctionsTest extends TestCase
         $this->assertEquals(1, countChinese($str, 1));
         $this->assertEquals(true, hasChinese($str));
     }
+
+    public function testRedisDelByLua()
+    {
+        $key = 'test';
+        $val = 'test';
+        $expire = 100;
+        $redis = redis();
+        $redis->del($key);
+        $redis->set($key, $val, ['nx', 'ex' => $expire]);
+
+        $result = redisDelByLua($key, $val);
+        logger('FunctionsTest', 'test')->info(PHP_EOL . __METHOD__ . " result: " . json_encode($result) . PHP_EOL);
+        $this->assertEquals(true, $result);
+    }
+
+    public function testRedisPipeline()
+    {
+        $redis1 = redis();
+        $redis = redis();
+        $redis->pipeline();
+
+        $redis1->set('test1', 'test1', 100);
+        $r = $redis1->get('test1');
+
+        $redis->set('test2', 'test2', 100);
+        $redis->get('test2');
+
+        $p = $redis->exec();
+
+        var_dump($r, $p);
+
+        $this->assertEquals(true, true);
+    }
+
+    public function testLock()
+    {
+        $r = lock(function(){
+
+            //throw new \Exception('test');
+
+            return 1;
+
+        }, 'test:lock', 1000);
+
+        $this->assertEquals($r, 1);
+    }
+
+    public function testAppleIp()
+    {
+        $ip = '17.147.100.102';
+        dd(isAppleIp($ip));
+        $this->assertEquals(true, isAppleIp($ip));
+    }
+
+    public function testJsapiTikect()
+    {
+        $appid = 'xx';
+        $secrect = 'xx';
+        $ticket = getJsapiTicket($appid, $secrect);
+        dd($ticket);
+    }
+
+    public function testScan()
+    {
+        $redis = redis();
+        $iterator = null;
+        $match = 'ba:*';
+        while(false !== ($keys = $redis->scan($iterator, $match, 5))) {
+            var_dump($keys);
+            foreach($keys as $key) {
+                echo $key . PHP_EOL;
+            }
+        }
+    }
 }

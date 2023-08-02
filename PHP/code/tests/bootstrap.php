@@ -21,5 +21,3 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($errorLog)
 set_exception_handler(function ($exception) use ($errorLog) {
     $errorLog->error($exception->getMessage(), array('exception' => $exception));
 });
-
-echo $aaa;
