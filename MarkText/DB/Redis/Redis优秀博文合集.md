@@ -53,3 +53,9 @@
 
 1. [Redis 事务支持 ACID 么？ - 掘金](https://juejin.cn/post/7053013135841558542)
 2. [Redis篇：事务和lua脚本的使用 - 掘金](https://juejin.cn/post/7032885787515420708)
+
+## 数据一致性
+
+1. [进大厂的绊脚石：Redis与MySQL双写一致性如何保证？](https://mp.weixin.qq.com/s/_RQ98YSrtO24vygLT-KxqQ)
+
+2. [掘地三尺搞定 Redis 与 MySQL 数据一致性问题 - 掘金](https://juejin.cn/post/7110120022848045092)

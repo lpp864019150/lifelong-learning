@@ -111,4 +111,14 @@ class FunctionsTest extends TestCase
             }
         }
     }
+
+    public function testEncrypt()
+    {
+        $str = '13660045612';
+        $key = substr(md5('testkey'), 8, 16);
+        $encrypt = encrypt($str, $key);
+        $decrypt = decrypt($encrypt, $key);
+        logger('FunctionsTest', 'test')->info(PHP_EOL . __METHOD__ . " encrypt: " . $encrypt . PHP_EOL, ['decrypt' => $decrypt, 'encrypt' => $encrypt]);
+        $this->assertEquals($str, $decrypt);
+    }
 }

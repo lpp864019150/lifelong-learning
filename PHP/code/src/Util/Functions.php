@@ -580,6 +580,146 @@ if (! function_exists('isToutiaoMiniProgram')) {
         return strpos($_SERVER['HTTP_USER_AGENT'], 'toutiao') !== false;
     }
 }
+// 通过ua判断是否为苹果系统
+if (! function_exists('isIos')) {
+    /**
+     * 通过ua判断是否为苹果系统
+     *
+     * @return bool
+     */
+    function isIos() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'iPhone') !== false || strpos($_SERVER['HTTP_USER_AGENT'], 'iPad') !== false;
+    }
+}
+// 通过ua获取ios版本号
+if (! function_exists('getIosVersion')) {
+    /**
+     * 通过ua获取ios版本号
+     *
+     * @return string
+     */
+    function getIosVersion() : string
+    {
+        preg_match('/OS (\d+)_(\d+)_?(\d+)?/', $_SERVER['HTTP_USER_AGENT'], $matches);
+        return $matches[1] . '.' . $matches[2] . '.' . ($matches[3] ?? 0);
+    }
+}
+// 可逆加密算法
+if (! function_exists('encrypt')) {
+    /**
+     * 可逆加密算法
+     *
+     * @param string $data
+     * @param string $key
+     * @return string
+     */
+    function encrypt(string $data, string $key) : string
+    {
+        $key = md5($key);
+        $x = 0;
+        $len = strlen($data);
+        $l = strlen($key);
+        $char = '';
+        $str = '';
+        for ($i = 0; $i < $len; $i++) {
+            if ($x == $l) {
+                $x = 0;
+            }
+            $char .= $key[$x];
+            $x++;
+        }
+        for ($i = 0; $i < $len; $i++) {
+            $str .= chr(ord($data[$i]) + (ord($char[$i])) % 256);
+        }
+        return base64_encode($str);
+    }
+}
+// 可逆解密算法
+if (! function_exists('decrypt')) {
+    /**
+     * 可逆解密算法
+     *
+     * @param string $data
+     * @param string $key
+     * @return string
+     */
+    function decrypt(string $data, string $key) : string
+    {
+        $key = md5($key);
+        $x = 0;
+        $data = base64_decode($data);
+        $len = strlen($data);
+        $l = strlen($key);
+        $char = '';
+        $str = '';
+        for ($i = 0; $i < $len; $i++) {
+            if ($x == $l) {
+                $x = 0;
+            }
+            $char .= substr($key, $x, 1);
+            $x++;
+        }
+        for ($i = 0; $i < $len; $i++) {
+            if (ord(substr($data, $i, 1)) < ord(substr($char, $i, 1))) {
+                $str .= chr((ord(substr($data, $i, 1)) + 256) - ord(substr($char, $i, 1)));
+            } else {
+                $str .= chr(ord(substr($data, $i, 1)) - ord(substr($char, $i, 1)));
+            }
+        }
+        return $str;
+    }
+}
+// 数据脱敏
+if (! function_exists('dataDesensitization')) {
+    /**
+     * 数据脱敏
+     *
+     * @param string $data
+     * @param int $start
+     * @param int $length
+     * @param string $replace
+     * @return string
+     */
+    function dataDesensitization(string $data, int $start = 0, int $length = 0, string $replace = '*') : string
+    {
+        if ($length == 0) {
+            $length = strlen($data) - $start;
+        }
+        return substr_replace($data, str_repeat($replace, $length), $start, $length);
+    }
+}
+// redis + lua 限流
+if (! function_exists('redisLimiter')) {
+    /**
+     * redis + lua 限流
+     *
+     * @param string $key
+     * @param int $limit
+     * @param int $expire
+     * @return bool 若返回true则表示已经超过限流阈值，需限流
+     */
+    function redisLimiter(string $key, int $limit, int $expire): bool
+    {
+        $lua = <<<LUA
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local expire = tonumber(ARGV[2])
+local current = tonumber(redis.call('get', key) or "0")
+if current + 1 > limit then
+    return 0
+else
+    redis.call("INCRBY", key, "1")
+    redis.call("expire", key, expire)
+    return current + 1
+end
+LUA;
+        $redis = redis();
+        return $redis->eval($lua, [$key, $limit, $expire], 1) === 0;
+    }
+}
+// 令牌桶算法限流
+
 
 
 
