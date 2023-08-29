@@ -59,3 +59,7 @@
 1. [进大厂的绊脚石：Redis与MySQL双写一致性如何保证？](https://mp.weixin.qq.com/s/_RQ98YSrtO24vygLT-KxqQ)
 
 2. [掘地三尺搞定 Redis 与 MySQL 数据一致性问题 - 掘金](https://juejin.cn/post/7110120022848045092)
+
+## 优化
+
+1. [Redis 大 key 问题一文通 - 掘金](https://juejin.cn/post/7261254961923768380)
