@@ -718,7 +718,19 @@ LUA;
         return $redis->eval($lua, [$key, $limit, $expire], 1) === 0;
     }
 }
-// 令牌桶算法限流
+// md5 16
+if (! function_exists('md5_16')) {
+    /**
+     * md5 16
+     *
+     * @param string $str
+     * @return string
+     */
+    function md5_16(string $str) : string
+    {
+        return substr(md5($str), 8, 16);
+    }
+}
 
 
 

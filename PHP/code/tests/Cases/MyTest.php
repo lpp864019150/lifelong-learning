@@ -38,4 +38,15 @@ class MyTest extends TestCase
 
         $this->assertEquals(1, 1);
     }
+
+    public function testRedisType()
+    {
+        $redis = redis();
+        $key = 'test_type_aaa1';
+        $int = 100;
+        $redis->set($key, $int, 600);
+        $type = gettype($redis->get($key));
+        var_dump($redis->get($key));
+        $this->assertEquals('string', $type);
+    }
 }
