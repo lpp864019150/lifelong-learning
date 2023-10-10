@@ -4,6 +4,7 @@
 
 1. [Redis实战篇：Redis分布式锁无死角分析_51CTO博客_redis setnx 分布式锁](https://blog.51cto.com/MageByte/2930601)
 2. [Redis分布式锁的10个坑 - 掘金](https://juejin.cn/post/7178327462869205051)
+3. [【千万级日订单系统】分布式锁翻车了… - 掘金](https://juejin.cn/post/7275973778915459084)
 
 ## 实战
 
@@ -26,7 +27,16 @@ end
 LUA;
         $redis = redis();
         $random = uniqid();
-        if ($redis->set($key, $random, ['nx', 'ex' => $ttl])) {
+
+        // 若是发生了异常也可能执行成功了，此处再次判断是否已加锁
+        try {
+            $lock = $redis->set($key, $random, ['nx', 'ex' => $ttl]);
+        } catch (\Throwable $e) {
+            if (!($lock = $redis->get($key) === $random))
+                throw new \Exception('redis set error: ' . $e->getMessage());
+        }
+
+        if ($lock) {
             try {
                 return call_user_func($call);
             } finally { // 无论成功与否都要解锁
@@ -73,4 +83,12 @@ LUA;
    
    当然还有一个方案就是维护一个进程，不断轮询，若发现锁快过期了则给其续期，此处也需注意原子操作。
 
-
+6. 在加锁时出现异常，判断为加锁失败，但是实际上又是加锁成功
+   
+   此时极有可能会漏掉解锁流程。
+   
+   可以在加锁异常后进行一次`get`，然后与`value`比对是否一致，若一致则为加锁成功。当然这里`get`也可能出现异常，我们可以重试一次。
+   
+   若这里持续出现异常，我们只能记录日志，增加预警，人工干预了。此时设置的过期时间就是所谓的保底操作了。
+   
+   我们还可以在持续出现异常后进行异步删除该锁，避免真的加锁了无法解锁的情况，如果依赖过期时间来保底的话会存在过期时间长的问题。

@@ -324,7 +324,16 @@ end
 LUA;
         $redis = redis();
         $random = uniqid();
-        if ($redis->set($key, $random, ['nx', 'ex' => $ttl])) {
+
+        // 若是发生了异常也可能执行成功了，此处再次判断是否已加锁
+        try {
+            $lock = $redis->set($key, $random, ['nx', 'ex' => $ttl]);
+        } catch (\Throwable $e) {
+            if (!($lock = $redis->get($key) === $random))
+                throw new \Exception('redis set error: ' . $e->getMessage());
+        }
+
+        if ($lock) {
             try {
                 return call_user_func($call);
             } finally { // 无论成功与否都要解锁
@@ -731,11 +740,29 @@ if (! function_exists('md5_16')) {
         return substr(md5($str), 8, 16);
     }
 }
-
-
-
-
-
-
-
-
+// 二分查找算法
+if (! function_exists('binarySearch')) {
+    /**
+     * 二分查找算法
+     *
+     * @param array $arr
+     * @param int $target
+     * @return int
+     */
+    function binarySearch(array $arr, int $target) : int
+    {
+        $left = 0;
+        $right = count($arr) - 1;
+        while ($left <= $right) {
+            $mid = $left + (($right - $left) >> 1);
+            if ($arr[$mid] == $target) {
+                return $mid;
+            } elseif ($arr[$mid] < $target) {
+                $left = $mid + 1;
+            } else {
+                $right = $mid - 1;
+            }
+        }
+        return -1;
+    }
+}
