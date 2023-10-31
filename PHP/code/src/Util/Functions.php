@@ -766,3 +766,159 @@ if (! function_exists('binarySearch')) {
         return -1;
     }
 }
+// 判断是否googlebot
+if (! function_exists('isGoogleBot')) {
+    /**
+     * 判断是否googlebot
+     *
+     * @return bool
+     */
+    function isGoogleBot() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'Googlebot') !== false;
+    }
+}
+// 判断是否bingbot
+if (! function_exists('isBingBot')) {
+    /**
+     * 判断是否bingbot
+     *
+     * @return bool
+     */
+    function isBingBot() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'bingbot') !== false;
+    }
+}
+// 判断是否bing爬虫
+if (! function_exists('isBingSpider')) {
+    /**
+     * 判断是否bing爬虫
+     *
+     * @return bool
+     */
+    function isBingSpider() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'bingbot') !== false || strpos($_SERVER['HTTP_USER_AGENT'], 'BingPreview') !== false;
+    }
+}
+// 判断是否google爬虫
+if (! function_exists('isGoogleSpider')) {
+    /**
+     * 判断是否google爬虫
+     *
+     * @return bool
+     */
+    function isGoogleSpider() : bool
+    {
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'Googlebot') !== false || strpos($_SERVER['HTTP_USER_AGENT'], 'Google Web Preview') !== false;
+    }
+}
+// 二叉树中序遍历
+if (! function_exists('inorderTraversal')) {
+    /**
+     * 二叉树中序遍历
+     *
+     * @param TreeNode $root
+     * @return array
+     */
+    function inorderTraversal(TreeNode $root) : array
+    {
+        $res = [];
+        $stack = [];
+        $cur = $root;
+        while ($cur != null || ! empty($stack)) {
+            while ($cur != null) {
+                array_push($stack, $cur);
+                $cur = $cur->left;
+            }
+            $cur = array_pop($stack);
+            $res[] = $cur->val;
+            $cur = $cur->right;
+        }
+        return $res;
+    }
+}
+// 先序遍历二叉树
+if (! function_exists('preorderTraversal')) {
+    /**
+     * 先序遍历二叉树
+     *
+     * @param TreeNode $root
+     * @return array
+     */
+    function preorderTraversal(TreeNode $root) : array
+    {
+        $res = [];
+        $stack = [];
+        $cur = $root;
+        while ($cur != null || ! empty($stack)) {
+            while ($cur != null) {
+                $res[] = $cur->val;
+                array_push($stack, $cur);
+                $cur = $cur->left;
+            }
+            $cur = array_pop($stack);
+            $cur = $cur->right;
+        }
+        return $res;
+    }
+}
+// 先序遍历二叉树，迭代法
+if (! function_exists('preorderTraversal2')) {
+    /**
+     * 先序遍历二叉树，迭代法
+     *
+     * @param TreeNode $root
+     * @return array
+     */
+    function preorderTraversal2(TreeNode $root) : array
+    {
+        $res = [];
+        $stack = [];
+        array_push($stack, $root);
+        while (! empty($stack)) {
+            $cur = array_pop($stack);
+            $res[] = $cur->val;
+            if ($cur->right != null) {
+                array_push($stack, $cur->right);
+            }
+            if ($cur->left != null) {
+                array_push($stack, $cur->left);
+            }
+        }
+        return $res;
+    }
+}
+// 后序遍历二叉树
+if (! function_exists('postorderTraversal')) {
+    /**
+     * 后序遍历二叉树
+     *
+     * @param TreeNode $root
+     * @return array
+     */
+    function postorderTraversal(TreeNode $root) : array
+    {
+        $res = [];
+        $stack = [];
+        $cur = $root;
+        $pre = null;
+        while ($cur != null || ! empty($stack)) {
+            while ($cur != null) {
+                array_push($stack, $cur);
+                $cur = $cur->left;
+            }
+            $cur = array_pop($stack);
+            if ($cur->right == null || $cur->right == $pre) {
+                $res[] = $cur->val;
+                $pre = $cur;
+                $cur = null;
+            } else {
+                array_push($stack, $cur);
+                $cur = $cur->right;
+            }
+        }
+        return $res;
+    }
+}
